@@ -12,4 +12,87 @@
 <div class="business-finder" data-lat="-33.7290" data-lng="151.0790" data-name="Your Business"></div>
 <h2>3. Invalid coordinates</h2>
 <iframe src="/embed?lat=abc&lng=151" width="100%" height="200" style="border:0" title="Invalid example"></iframe>
+<h2 id="onboarding">4. Self-serve onboarding (TEMPORARY preview)</h2>
+<style>
+#ob{max-width:640px;font-size:14px;color:#111827}
+#ob svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ob-banner{display:flex;gap:8px;align-items:center;background:#fff3cd;border:1px solid #e0a800;border-radius:8px;padding:8px 12px;font-weight:600}
+.ob-search{display:flex;align-items:center;gap:8px;height:44px;border:1px solid #d1d5db;border-radius:8px;padding:0 4px 0 12px;margin:12px 0;color:#6b7280}
+.ob-search:focus-within{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.ob-search input{flex:1;border:0;outline:0;font:inherit;height:100%;color:#111827;background:transparent}
+.ob-go{width:36px;height:36px;border:0;border-radius:6px;background:#1d4ed8;color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+#ob-results{list-style:none;margin:0;padding:0;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden}
+#ob-results:empty{display:none}
+#ob-results li{display:flex;gap:8px;align-items:center;min-height:44px;padding:6px 12px;cursor:pointer;border-left:2px solid transparent;border-top:1px solid #f3f4f6}
+#ob-results li:hover{background:#f3f4f6}
+#ob-results li[aria-selected=true]{background:#eff6ff;border-left-color:#1d4ed8}
+#ob-results li .ck{visibility:hidden;color:#1d4ed8}#ob-results li[aria-selected=true] .ck{visibility:visible}
+.ob-p{font-weight:600}.ob-s{font-size:12px;color:#6b7280}
+.ob-attr{font-size:12px;color:#6b7280}
+.ob-mapwrap{position:relative;margin-top:8px}
+.ob-chip{position:absolute;top:10px;left:10px;z-index:2;display:flex;gap:6px;align-items:center;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border:1px solid rgba(15,23,42,.1);box-shadow:0 2px 8px rgba(15,23,42,.18);font-size:13px;font-weight:500}
+.ob-chip[hidden]{display:none}
+.ob-lift>svg{transform:translateY(-6px);filter:drop-shadow(0 6px 6px rgba(0,0,0,.35))}
+.ob-row{display:flex;gap:8px;align-items:center;margin:8px 0}
+.ob-row input{height:36px;border:1px solid #d1d5db;border-radius:8px;padding:0 10px;font:inherit}
+.ob-link{border:0;background:none;color:#1d4ed8;cursor:pointer;font:inherit;display:inline-flex;gap:4px;align-items:center;padding:0}
+.ob-link[hidden]{display:none}
+.ob-primary{width:100%;height:44px;border:0;border-radius:8px;background:#1d4ed8;color:#fff;font:600 15px system-ui;display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer;margin-top:8px}
+.ob-primary:hover{background:#1e40af}.ob-primary:disabled{opacity:.4;cursor:not-allowed}
+.ob-summary{display:flex;justify-content:space-between;align-items:center;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;margin-top:8px}
+.ob-summary[hidden],#ob-step2[hidden],#ob-out[hidden]{display:none}
+.ob-tabs{display:inline-flex;background:#e5e7eb;border-radius:999px;padding:3px;margin:8px 0}
+.ob-tabs button{height:26px;border:0;border-radius:999px;background:transparent;padding:0 14px;font:500 13px system-ui;cursor:pointer;color:#374151}
+.ob-tabs button[aria-selected=true]{background:#fff;color:#111827;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.ob-code{position:relative}
+.ob-code pre{background:#f4f4f4;padding:12px 96px 12px 12px;border-radius:8px;overflow:auto;margin:0;font-size:12px}
+.ob-copy{position:absolute;top:6px;right:6px;height:32px;display:flex;gap:4px;align-items:center;padding:0 10px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font:500 13px system-ui}
+.ob-copy.ok{color:#15803d;border-color:#15803d}
+.ob-secondary{height:36px;border:1px solid #d1d5db;border-radius:8px;background:#fff;padding:0 12px;display:inline-flex;gap:6px;align-items:center;cursor:pointer;font:500 14px system-ui;margin-top:10px}
+
+/* Pin drop: animates the marker's inner SVG only; MapLibre owns the outer element's transform, so the coordinate never moves. */
+.bf-pin>svg{transform-origin:50% 100%}
+.bf-pin::after{content:"";position:absolute;left:50%;bottom:-3px;width:18px;height:6px;margin-left:-9px;border-radius:50%;background:rgba(0,0,0,.28);filter:blur(1px);pointer-events:none;z-index:-1}
+.bf-pin.bf-drop>svg{animation:bf-fall 620ms both}
+.bf-pin.bf-drop::after{animation:bf-shadow 620ms both}
+@keyframes bf-fall{
+  0%{transform:translateY(-50px);opacity:0;animation-timing-function:cubic-bezier(.55,0,1,.45)}
+  8%{opacity:1}
+  52%{transform:translateY(0) scale(1,1);animation-timing-function:ease-out}
+  62%{transform:translateY(0) scale(1.14,.82);animation-timing-function:ease-out}
+  78%{transform:translateY(-9px) scale(.97,1.04);animation-timing-function:ease-in}
+  90%{transform:translateY(0) scale(1.04,.95);animation-timing-function:ease-out}
+  100%{transform:none}}
+@keyframes bf-shadow{0%{transform:scale(.25);opacity:0}52%{transform:scale(1.1);opacity:1}62%{transform:scale(1.25)}78%{transform:scale(.85);opacity:.7}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.bf-pin.bf-drop>svg,.bf-pin.bf-drop::after{animation:none}}
+
+.ob-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+<div id="ob">
+<div class="ob-banner" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Temporary onboarding preview: not saved, for demo only (no D1 yet; the ID will not resolve).</div>
+<form id="ob-form" class="ob-search" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+<input id="ob-addr" name="address" maxlength="200" required placeholder="Business address, e.g. Westfield Hornsby" aria-label="Business address" aria-controls="ob-results" autocomplete="off">
+<button type="submit" class="ob-go" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button></form>
+<p id="ob-status" aria-live="polite"></p>
+<ul id="ob-results" role="listbox" aria-label="Address matches"></ul>
+<p class="ob-attr">Address search by <a href="https://nominatim.org/">Nominatim</a>. Data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL).</p>
+<div id="ob-step2" hidden>
+<link rel="stylesheet" href="/vendor/maplibre-gl.css">
+<div class="ob-mapwrap"><div class="ob-chip" id="ob-chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"/><path d="m15 19-3 3-3-3"/><path d="m19 9 3 3-3 3"/><path d="M2 12h20"/><path d="m5 9-3 3 3 3"/><path d="m9 5 3-3 3 3"/></svg>Drag pin to your entrance</div>
+<div id="ob-map" style="height:320px;border-radius:8px" tabindex="0" aria-label="Pin map. Arrow keys nudge the pin 1 m, Shift for 10 m."></div></div>
+<div class="ob-row"><label>Pin <input id="ob-ll" readonly size="24" aria-label="Pin latitude, longitude"></label>
+<button type="button" class="ob-link" id="ob-reset" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/></svg>Reset to search result</button></div>
+<div class="ob-row"><label>Business name (optional, preview only) <input id="ob-name" maxlength="80"></label></div>
+<button type="button" class="ob-primary" id="ob-confirm" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Use this location</button>
+</div>
+<div class="ob-summary" id="ob-summary" hidden><span id="ob-sum"></span><button type="button" class="ob-link" id="ob-edit">Edit</button></div>
+<div id="ob-out" hidden><p>Your embed tag (ID <code id="ob-id"></code>, carries only the ID):</p>
+<div class="ob-tabs" role="tablist"><button role="tab" id="ob-t1" aria-selected="true" aria-controls="ob-p1">Iframe</button><button role="tab" id="ob-t2" aria-selected="false" aria-controls="ob-p2">Script tag</button></div>
+<div class="ob-code" id="ob-p1" role="tabpanel"><pre id="ob-iframe"></pre><button type="button" class="ob-copy" data-for="ob-iframe"></button></div>
+<div class="ob-code" id="ob-p2" role="tabpanel" hidden><pre id="ob-script"></pre><button type="button" class="ob-copy" data-for="ob-script"></button></div>
+<span class="ob-sr" id="ob-live" aria-live="polite"></span>
+<button type="button" class="ob-secondary" id="ob-play"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>Play preview</button> <small>(dev raw-params path with the confirmed lat/lng)</small>
+<iframe id="ob-player" hidden width="600" height="400" style="border:0;max-width:100%;display:block;margin-top:8px" title="Preview"></iframe></div>
+</div>
+<script src="/vendor/maplibre-gl.js"></script><script src="/onboard.js"></script>
 </body></html>

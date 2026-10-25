@@ -14,3 +14,5 @@ REVERSE_GEOCODE = "off"
 # Nearby landmarks: "sample" (bundled Thornleigh demo data, default) or "overpass" (cached OSM Overpass lookup).
 LANDMARKS_SOURCE = "sample"
 USER_AGENT = "BusinessFinder/0.1 (+https://github.com/eLBirador/business-finder)"
+# Public embed/worker host used in generated tags (PRD 5.1). DNS/custom domain not set up yet (no deploy).
+EMBED_HOST = "https://goto.yahaay.com"

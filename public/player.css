@@ -1,11 +1,72 @@
 html,body,#map{margin:0;height:100%;width:100%;font-family:system-ui,sans-serif}
-#labels{position:absolute;top:12px;left:12px;right:12px;pointer-events:none;display:flex;flex-direction:column;gap:4px}
-.lbl{background:rgba(255,255,255,.92);padding:6px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.2);
- font-size:20px;font-weight:600;align-self:flex-start;opacity:0;transition:opacity .6s,font-size .6s,padding .6s}
-.lbl.on{opacity:1}.lbl.crumb{font-size:12px;font-weight:500;padding:2px 8px;opacity:.85}
 #status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f3f4f6;color:#555}
 #status[hidden]{display:none}
-#controls{position:absolute;bottom:30px;left:10px;display:flex;gap:6px}
-#controls button,#controls a{background:#fff;border:1px solid #ccc;border-radius:6px;padding:4px 10px;font-size:13px;color:#222;text-decoration:none;cursor:pointer}
-#controls button[aria-pressed=true]{background:#1d4ed8;color:#fff}
-.lm{background:#fff;border:2px solid #1d4ed8;border-radius:12px;padding:1px 6px;font-size:12px;cursor:pointer;white-space:nowrap}
+.lm{background:#fff;border:2px solid var(--bf-accent);border-radius:12px;padding:1px 6px;font-size:12px;cursor:pointer;white-space:nowrap}
+:root{--bf-inset:12px;--attrib-h:24px;--bf-glass:rgba(255,255,255,.78);--bf-ink:#1f2937;--bf-accent:#4f46e5;--bf-accent-hover:#4338ca;--bf-accent-pressed:#3730a3;--bf-focus:#4f46e5;--bf-halo:rgba(79,70,229,.25);--bf-on-bg:#e0e7ff;--bf-on-fg:#3730a3;--bf-tip:#0f172a}
+.bf-dark{--bf-glass:rgba(15,23,42,.72);--bf-ink:#f8fafc;--bf-focus:#a5b4fc;--bf-halo:rgba(165,180,252,.30);--bf-on-bg:#312e81;--bf-on-fg:#c7d2fe}
+.bf-ctl{position:absolute;left:var(--bf-inset);bottom:calc(var(--bf-inset) + var(--attrib-h));z-index:3;display:flex;gap:2px;padding:4px;
+  border-radius:999px;background:var(--bf-glass);-webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);
+  border:1px solid rgba(15,23,42,.10);box-shadow:0 2px 8px rgba(15,23,42,.18);
+  opacity:0;transform:translateY(8px);transition:opacity .24s cubic-bezier(.2,.8,.2,1),transform .24s cubic-bezier(.2,.8,.2,1)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.bf-ctl{background:rgba(255,255,255,.94)}.bf-dark .bf-ctl{background:rgba(17,24,39,.94)}}
+.bf-ctl.is-in{opacity:1;transform:none}
+.bf-ctl[hidden],.bf-ctl [hidden],.bf-skip[hidden]{display:none}
+.bf-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:36px;height:36px;padding:0;
+  border:0;border-radius:999px;background:transparent;color:var(--bf-ink);font:600 14px/1 system-ui,sans-serif;text-decoration:none;cursor:pointer;
+  transition:background-color .12s,transform .08s}
+.bf-ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.bf-btn:hover{background:rgba(15,23,42,.06)}
+.bf-btn:active{background:rgba(15,23,42,.12);transform:scale(.96)}
+.bf-btn:focus-visible,.bf-skip:focus-visible{outline:2px solid var(--bf-focus);outline-offset:2px;box-shadow:0 0 0 4px var(--bf-halo)}
+.bf-btn:disabled,.bf-btn[aria-disabled=true]{opacity:.4;cursor:not-allowed}
+.bf-btn[aria-pressed=true]{background:var(--bf-on-bg);color:var(--bf-on-fg)}
+.bf-btn[aria-pressed=true]::after{content:"";position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--bf-on-fg);box-shadow:0 0 0 1.5px #fff}
+.bf-primary{padding:0 14px 0 12px;background:var(--bf-accent);color:#fff}
+.bf-primary:hover{background:var(--bf-accent-hover)}.bf-primary:active{background:var(--bf-accent-pressed)}
+@media (pointer:coarse){.bf-btn::before{content:"";position:absolute;inset:-4px}}
+.bf-btn[data-tip]:hover::before,.bf-btn[data-tip]:focus-visible::before{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  white-space:nowrap;padding:4px 8px;border-radius:6px;background:var(--bf-tip);color:#fff;font:500 12px/1.2 system-ui;pointer-events:none;transition-delay:.4s}
+.bf-skip{position:absolute;right:var(--bf-inset);bottom:calc(var(--bf-inset) + var(--attrib-h));z-index:3;display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 10px 0 12px;
+  border:1px solid rgba(15,23,42,.10);border-radius:999px;background:var(--bf-glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--bf-ink);font:500 13px system-ui;cursor:pointer}
+.bf-skip .bf-ic{width:16px;height:16px}
+@media (max-width:420px){.bf-primary .bf-txt{display:none}.bf-primary{padding:0;width:36px}:root{--bf-inset:8px}}
+@media (max-width:300px),(max-height:240px){#nearby{display:none}}
+@media (max-height:260px){.maplibregl-ctrl-top-right{display:none}}
+@media (prefers-reduced-motion:reduce){.bf-ctl,.bf-btn{transition:none;transform:none}}
+
+#labels{position:absolute;top:12px;left:12px;max-width:min(320px,calc(100% - 64px));pointer-events:none;z-index:1}
+.card{background:rgba(255,255,255,.92);padding:8px 12px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.2);opacity:0;transition:opacity .6s,transform .6s;transform-origin:top left}
+.card.on{opacity:1}.card[hidden]{display:none}
+.card.orbit{transform:scale(.9);opacity:.9}
+.crumbs{font-size:11px;font-weight:500;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm{font-size:18px;font-weight:700;color:#111827}.nm:empty,.st:empty,.crumbs:empty{display:none}
+.st{font-size:13px;font-weight:500;color:#4b5563}
+.maplibregl-marker{z-index:2}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+.bf-btn{opacity:1}
+.bf-ctl:not(.is-in) .bf-btn{opacity:0;transform:translateY(8px)}
+.bf-ctl.is-in .bf-btn{transition:opacity .24s cubic-bezier(.2,.8,.2,1),transform .24s cubic-bezier(.2,.8,.2,1),background-color .12s}
+.bf-ctl.is-in .bf-btn:nth-child(2){transition-delay:40ms}.bf-ctl.is-in .bf-btn:nth-child(3){transition-delay:80ms}
+@media (prefers-reduced-motion:reduce){.bf-ctl .bf-btn,.bf-ctl.is-in .bf-btn{transition:none!important;transform:none!important;opacity:1!important}.bf-ctl{opacity:1}}
+/* Pin drop: animates the marker's inner SVG only; MapLibre owns the outer element's transform, so the coordinate never moves. */
+.bf-pin>svg{transform-origin:50% 100%}
+.bf-pin::after{content:"";position:absolute;left:50%;bottom:-3px;width:18px;height:6px;margin-left:-9px;border-radius:50%;background:rgba(0,0,0,.28);filter:blur(1px);pointer-events:none;z-index:-1}
+.bf-pin.bf-drop>svg{animation:bf-fall 620ms both}
+.bf-pin.bf-drop::after{animation:bf-shadow 620ms both}
+@keyframes bf-fall{
+  0%{transform:translateY(-50px);opacity:0;animation-timing-function:cubic-bezier(.55,0,1,.45)}
+  8%{opacity:1}
+  52%{transform:translateY(0) scale(1,1);animation-timing-function:ease-out}
+  62%{transform:translateY(0) scale(1.14,.82);animation-timing-function:ease-out}
+  78%{transform:translateY(-9px) scale(.97,1.04);animation-timing-function:ease-in}
+  90%{transform:translateY(0) scale(1.04,.95);animation-timing-function:ease-out}
+  100%{transform:none}}
+@keyframes bf-shadow{0%{transform:scale(.25);opacity:0}52%{transform:scale(1.1);opacity:1}62%{transform:scale(1.25)}78%{transform:scale(.85);opacity:.7}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.bf-pin.bf-drop>svg,.bf-pin.bf-drop::after{animation:none}}
+
+/* Pin: Yahaay indigo with a white stroke (colour guide). */
+/* by Yahaay credit, merged into the attribution row (never overlaps the controls). */
+.bf-by{font-weight:600;color:#3730a3!important;text-decoration:none;white-space:nowrap}
+.bf-by i{display:inline-block;width:11px;height:11px;border-radius:3px;background:#4f46e5;color:#fff;font:700 8px/11px system-ui;text-align:center;font-style:normal;margin-right:3px;vertical-align:-1px}
+@media (max-height:240px){.bf-by{display:none}}
+.bf-pin svg [fill="#4f46e5"]{stroke:#fff;stroke-width:1.5}

@@ -8,7 +8,8 @@ describe("buildPlan", () => {
     expect(plan.keyframes.map((k) => k.step)).toEqual(["state", "lgu", "location", "street"]);
     expect(plan.keyframes.map((k) => k.label)).toEqual(["New South Wales (NSW)", "Hornsby Shire", "Your Business", "Pennant Hills Road"]);
     const total = plan.keyframes.reduce((s, k) => s + k.flyMs + k.holdMs, 0);
-    expect(total).toBeGreaterThanOrEqual(7000); expect(total).toBeLessThanOrEqual(9000);
+    expect(total).toBeGreaterThanOrEqual(13000); expect(total).toBeLessThanOrEqual(16000);
+    expect(plan.keyframes.map((k) => [k.flyMs, k.holdMs])).toEqual([[0, 2500], [4500, 1500], [4500, 0], [0, 1000]]);
     expect(plan.keyframes[2].center).toEqual([151.079, -33.729]);
   });
   it("lgu param overrides lookup; derived street used when no override", () => {
@@ -53,5 +54,48 @@ describe("landmarks", () => {
   it("direction is compass words", () => {
     expect(direction(0, 0, 1, 0)).toBe("north");
     expect(rankLandmarks(-33.729, 151.079, SAMPLE)[0].direction).toBe("south");
+  });
+});
+
+describe("orbit (step 5)", () => {
+  const plan = buildPlan({ ...base, name: "Your Business" });
+  it("locks the orbit center exactly on the pin", () => {
+    expect(plan.orbit.center).toEqual([151.079, -33.729]);
+    expect(plan.orbit.center).toEqual(plan.target);
+  });
+  it("orbit starts one zoom closer and turns landmarks on", () => {
+    expect(plan.orbit.zoom).toBe(plan.keyframes[2].zoom + 1);
+    expect(plan.orbit.landmarksOn).toBe(true);
+    expect(plan.flyEasing).toBe("easeInOutSine");
+  });
+  it("tilts ~55-60 deg and orbits slowly for 16-18 s", () => {
+    expect(plan.orbit.pitch).toBeGreaterThanOrEqual(55); expect(plan.orbit.pitch).toBeLessThanOrEqual(60);
+    expect(plan.orbit.durationMs).toBeGreaterThanOrEqual(16000); expect(plan.orbit.durationMs).toBeLessThanOrEqual(18000);
+    expect(Math.abs(plan.orbit.bearingSweep)).toBeGreaterThan(0); expect(Math.abs(plan.orbit.bearingSweep)).toBeLessThanOrEqual(360);
+    expect(plan.orbit.settlePitch).toBeLessThan(plan.orbit.pitch);
+  });
+});
+
+describe("loop (PRD 6.1)", () => {
+  const plan = buildPlan({ ...base, name: "Your Business" });
+  it("pulses suburb <-> location only, never the state or LGU view, forever", () => {
+    expect(plan.loop.enabled).toBe(true);
+    expect(plan.loop.repeat).toBe("forever");
+    expect(plan.loop.steps.map((s) => s.step)).toEqual(["suburb", "location"]);
+    expect(plan.loop.steps.some((s) => ["state", "lgu"].includes(s.step as string))).toBe(false);
+  });
+  it("pulls back locally around the business (suburb scale) and holds a few seconds", () => {
+    const sub = plan.loop.steps[0];
+    expect(sub.center).toEqual(plan.target);
+    expect(sub.zoom).toBeLessThan(plan.keyframes[2].zoom);
+    expect(sub.zoom).toBeGreaterThan(plan.keyframes[1].zoom + 2); // well inside the shire view
+    expect(sub.zoom).toBeGreaterThanOrEqual(13);
+    expect(sub.holdMs).toBeGreaterThanOrEqual(3000); expect(sub.holdMs).toBeLessThanOrEqual(4000);
+  });
+  it("repeats a shorter orbit locked on the pin at the location", () => {
+    const loc = plan.loop.steps[1];
+    expect(loc.center).toEqual(plan.target);
+    expect(loc.orbit!.center).toEqual(plan.target);
+    expect(loc.orbit!.durationMs).toBeLessThan(plan.orbit.durationMs);
   });
 });
