@@ -16,6 +16,11 @@ LANDMARKS_SOURCE = "sample"
 USER_AGENT = "BusinessFinder/0.1 (+https://github.com/eLBirador/business-finder)"
 # Public embed/worker host used in generated tags (PRD 5.1). DNS/custom domain not set up yet (no deploy).
 EMBED_HOST = "https://goto.yahaay.com"
+# Spam protection (Cloudflare Turnstile). Public site key, same widget as yahaay.com. TURNSTILE_SECRET_KEY is a dashboard Secret.
+TURNSTILE_SITE_KEY = "0x4AAAAAAFS92jCFMmH16NYt"
+TURNSTILE_HOSTNAMES = "yahaay.com,www.yahaay.com,goto.yahaay.com,business-finder-26j.pages.dev"
+# Edit-link email relay on the yahaay.com Worker. BF_MAIL_SECRET is a dashboard Secret (same value on both projects).
+MAIL_ENDPOINT = "https://www.yahaay.com/internal/bf-mail"
 
 # Business configs (PRD 8). Created 25 Oct 2026; schema in migrations/.
 [[d1_databases]]

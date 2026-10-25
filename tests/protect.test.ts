@@ -34,7 +34,7 @@ describe("verifyTurnstile", () => {
     expect(await verifyTurnstile({}, "tok", undefined, (() => ok({ success: true, hostname: "yahaay.com" })) as never)).toBe(false);
   });
   it("default hostname allowlist", () => {
-    expect([...hostnames({})]).toEqual(["yahaay.com", "www.yahaay.com", "goto.yahaay.com", "business-finder.pages.dev"]);
+    expect([...hostnames({})]).toEqual(["yahaay.com", "www.yahaay.com", "goto.yahaay.com", "business-finder-26j.pages.dev"]);
   });
 });
 
