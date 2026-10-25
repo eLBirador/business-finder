@@ -71,12 +71,21 @@
       });
     };
   });
+  // Spam protection (same as yahaay.com): Turnstile + honeypot + time since the form was shown.
+  var tsTok = "", tsId, shown = Date.now(), tsKey = "";
+  fetch("/api/business/config").then(function (r) { return r.json(); }).then(function (c) {
+    tsKey = c.siteKey || ""; if (!tsKey) return;
+    window.bfTs = function () { tsId = turnstile.render("#ob-ts", { sitekey: tsKey, action: "bf_create", callback: function (t) { tsTok = t; }, "expired-callback": function () { tsTok = ""; } }); };
+    var sc = document.createElement("script"); sc.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=bfTs"; sc.async = true; document.head.appendChild(sc);
+  }).catch(function () {});
   $("ob-confirm").onclick = function () {
     var p = marker.getLngLat(), err = $("ob-err"), btn = $("ob-confirm");
     err.textContent = "";
     var name = $("ob-name").value.trim() || (picked ? picked.display_name.split(", ")[0] : "");
     var body = { name: name, address: picked ? picked.display_name.slice(0, 200) : $("ob-addr").value.trim(), osmRef: picked && picked.osm_ref || undefined,
-      lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6), email: $("ob-email").value.trim(), options: { landmarks: true, autoplay: true } };
+      lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6), email: $("ob-email").value.trim(), options: { landmarks: true, autoplay: true },
+      company_site: $("ob-hp").value, elapsedMs: Date.now() - shown, turnstileToken: tsTok };
+    if (tsKey && !tsTok) { err.textContent = "Please complete the check above."; return; }
     btn.disabled = true;
     fetch("/api/business", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "Save failed"); return j; }); })
@@ -88,9 +97,11 @@
         $("ob-step2").hidden = true; $("ob-summary").hidden = false;
         $("ob-sum").textContent = "Saved " + j.id + " · pin " + $("ob-ll").value + (picked ? " · " + picked.display_name.split(", ")[0] : "");
       })
-      .catch(function (e) { err.textContent = e.message; })
+      .catch(function (e) { err.textContent = e.message; tsTok = ""; if (window.turnstile && tsId !== undefined) turnstile.reset(tsId); })
       .finally(function () { btn.disabled = false; });
   };
+  // Live preview: debounced (~600 ms) refresh of the raw-params preview while the name changes.
+  var pvT; $("ob-name").addEventListener("input", function () { clearTimeout(pvT); pvT = setTimeout(function () { if (!$("ob-player").hidden && !window.__bfId) $("ob-play").onclick(); }, 600); });
   $("ob-edit").onclick = function () { $("ob-step2").hidden = false; $("ob-summary").hidden = true; $("ob-out").hidden = true; map.resize(); };
   $("ob-play").onclick = function () {
     var p = marker.getLngLat(), q = new URLSearchParams({ lat: p.lat.toFixed(6), lng: p.lng.toFixed(6) });

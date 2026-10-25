@@ -104,3 +104,10 @@ npm run typecheck
 - Street name comes from the `street` param unless Nominatim is switched on.
 - Landmark sample coordinates are approximate.
 - Not deployed. No pricing, billing or customer keys (deferred per the PRD).
+
+## Info card, edit-link email and spam protection
+
+- **Info card:** `/e/<id>` and `/embed?tagline=&hours=&phone=&website=` show a tagline, hours, a `tel:` link and a website link (http/https only). Everything is cleaned and escaped. Embeds smaller than 360x300 collapse to name and street with an "i" button. `owner_email` is never sent to the embed.
+- **Edit-link email:** after `POST /api/business` and `POST /api/business/resend`, the Function sends `{to, businessName, id, token}` to the yahaay.com Worker (`/internal/bf-mail`). It uses the `MAILER` service binding, or `MAIL_ENDPOINT` if that is set. The `x-bf-mail-secret` header must match `BF_MAIL_SECRET`. The Worker sends the email from info@yahaay.com. Resend issues a new edit key and always replies 202.
+- **Spam protection:** Turnstile siteverify (hostname allowlist `TURNSTILE_HOSTNAMES`), a `company_site` honeypot, `elapsedMs` >= 3000, a per-IP limit in memory, and a durable D1 limit (`rate_limit` table, migration 0002: 20 creates and 5 resends per IP per hour). `GET /api/business/config` returns the public site key.
+- **Local dev:** `.dev.vars` (gitignored) holds the Turnstile *test* keys, `TURNSTILE_HOSTNAMES=example.com,localhost,...`, `MAIL_ENDPOINT=http://localhost:8789/internal/bf-mail` and `BF_MAIL_SECRET`. Run `npx wrangler d1 migrations apply business-finder --local`.

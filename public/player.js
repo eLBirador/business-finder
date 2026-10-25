@@ -62,13 +62,30 @@
     // Earlier state/LGU labels shrink to a breadcrumb; business name and street both stay full size (PRD 6).
     // One label card: state and LGU collapse into a breadcrumb; business name with the street as a subline (UI review P0.2).
     var card = labels.querySelector(".card"), crumbs = card.querySelector(".crumbs"), nm = card.querySelector(".nm"), st = card.querySelector(".st");
-    function clearLabels() { crumbs.textContent = ""; nm.textContent = ""; st.textContent = ""; card.hidden = true; card.classList.remove("on", "orbit"); }
+    // Owner info card: tagline, hours, tel: phone, website. textContent only; URLs were sanitised by the Worker (http/https only).
+    var info = card.querySelector(".info"), ib = card.querySelector(".ib"), inf = plan.info || null, infoOpen = false;
+    if (inf) {
+      info.querySelector(".tg").textContent = inf.tagline || ""; info.querySelector(".hr").textContent = inf.hours || "";
+      var ph = info.querySelector(".ph"), web = info.querySelector(".web");
+      if (inf.phone && inf.tel && /^\+?[0-9]{3,20}$/.test(inf.tel)) { ph.textContent = "\u260e " + inf.phone; ph.href = "tel:" + inf.tel; ph.setAttribute("aria-label", "Call " + inf.phone); ph.hidden = false; }
+      if (inf.website && /^https?:\/\//i.test(inf.website)) { web.textContent = inf.websiteLabel || inf.website; web.href = inf.website; web.setAttribute("aria-label", "Website " + (inf.websiteLabel || "") + " (opens in new tab)"); web.hidden = false; }
+    }
+    function small() { return innerWidth < 360 || innerHeight < 300; }
+    function syncInfo() {
+      var show = !!inf && !!nm.textContent;
+      ib.hidden = !(show && small()); infoOpen = infoOpen && !ib.hidden;
+      ib.setAttribute("aria-expanded", String(infoOpen));
+      info.hidden = !show || (small() && !infoOpen);
+    }
+    ib.onclick = function () { infoOpen = !infoOpen; syncInfo(); };
+    addEventListener("resize", syncInfo);
+    function clearLabels() { crumbs.textContent = ""; nm.textContent = ""; st.textContent = ""; info.hidden = true; ib.hidden = true; card.hidden = true; card.classList.remove("on", "orbit"); }
     function label(text, step) {
       if (!text) return;
       if (step === "location") nm.textContent = text;
       else if (step === "street") st.textContent = text;
       else crumbs.textContent = crumbs.textContent ? crumbs.textContent + " \u203a " + text : text;
-      card.hidden = false; requestAnimationFrame(function () { card.classList.add("on"); });
+      syncInfo(); card.hidden = false; requestAnimationFrame(function () { card.classList.add("on"); });
     }
     function crumbAll() { crumbs.textContent = kf.filter(function (k) { return (k.step === "state" || k.step === "lgu") && k.label; }).map(function (k) { return k.label; }).join(" \u203a "); }
     function finalView() {
@@ -157,7 +174,7 @@
     skipBtn.onclick = function () { finalView(); };
     map.on("load", function () {
       status.hidden = true; attribH();
-      var autoplay = q.get("autoplay") === null || !/^(false|0|no)$/i.test(q.get("autoplay"));
+      var autoplay = plan.autoplay !== false && (q.get("autoplay") === null || !/^(false|0|no)$/i.test(q.get("autoplay")));
       if (reduce || !autoplay) { finalView(); if (!autoplay && !reduce) setMode("play"); return; }
       if (!("IntersectionObserver" in window)) return play();
       var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); play(); } }, { threshold: 0.4 });

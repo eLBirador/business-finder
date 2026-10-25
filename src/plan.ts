@@ -1,5 +1,5 @@
 import { findLgu, findState } from "./geo";
-import type { EmbedParams } from "./params";
+import type { EmbedParams, InfoCard } from "./params";
 import { rankLandmarks, SAMPLE, type Landmark, type RankedLandmark } from "./landmarks";
 
 export interface Keyframe {
@@ -23,7 +23,7 @@ export interface LoopStep { step: "suburb" | "location"; center: [number, number
 export interface Loop { enabled: boolean; repeat: "forever"; steps: LoopStep[] }
 export interface Plan {
   /** Gentle easing for every flyTo step. */
-  flyEasing: Easing; version: 1; target: [number, number]; name?: string; street?: string; keyframes: Keyframe[]; directionsUrl: string; orbit: Orbit; loop: Loop; landmarks: RankedLandmark[] }
+  flyEasing: Easing; version: 1; target: [number, number]; name?: string; street?: string; info?: InfoCard; autoplay: boolean; keyframes: Keyframe[]; directionsUrl: string; orbit: Orbit; loop: Loop; landmarks: RankedLandmark[] }
 
 // Phase 1 timings (PRD 6). Tune here: no frontend redeploy needed.
 const T = { stateHold: 2500, lguFly: 4500, lguHold: 1500, locFly: 4500, streetDelay: 1000 };
@@ -58,7 +58,7 @@ export function buildPlan(p: EmbedParams, derived: { street?: string; landmarks?
   // Step 4: same view, street label shortly after.
   kf.push({ step: "street", center: target, zoom: LOCATION_ZOOM, flyMs: 0, holdMs: T.streetDelay, label: street });
 
-  return { version: 1, flyEasing: "easeInOutSine", target, name: p.name, street, keyframes: kf,
+  return { version: 1, flyEasing: "easeInOutSine", target, name: p.name, street, info: p.info, autoplay: p.autoplay, keyframes: kf,
     directionsUrl: `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`,
     orbit: { center: target, zoom: ORBIT.zoom, pitch: ORBIT.pitch, pitchInMs: ORBIT.pitchInMs,
       bearingStart: 0, bearingSweep: ORBIT.sweep, durationMs: ORBIT.durationMs, easing: "easeInOutSine",
