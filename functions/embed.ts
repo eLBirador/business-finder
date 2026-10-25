@@ -2,7 +2,7 @@
 export const EMBED_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Business location map</title>
 <link rel="stylesheet" href="/vendor/maplibre-gl.css"><link rel="stylesheet" href="/player.css">
-</head><body><div id="map"></div><div id="labels" aria-live="polite"><div class="card" hidden><div class="crumbs"></div><div class="nm"></div><div class="st"></div></div></div>
+</head><body><div id="map"></div><div id="labels" aria-live="polite"><div class="card" hidden><div class="crumbs"></div><div class="hd"><div class="nm"></div><button class="ib" type="button" aria-expanded="false" aria-controls="bf-info" aria-label="Business info" hidden>i</button></div><div class="st"></div><div class="info" id="bf-info" hidden><div class="tg"></div><div class="hr"></div><div class="lk"><a class="ph" hidden></a><a class="web" target="_blank" rel="noopener nofollow ugc" hidden></a></div></div></div></div>
 <div id="status" class="loading">Loading map…</div>
 <div id="controls" class="bf-ctl" role="toolbar" aria-label="Map controls" hidden>
   <button id="replay" class="bf-btn" type="button" aria-label="Replay tour" data-tip="Replay"><svg class="bf-ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>

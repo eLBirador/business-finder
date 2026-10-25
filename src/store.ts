@@ -1,4 +1,8 @@
 // D1 storage for business configs (PRD 8). Pure helpers + a small repo interface so handlers are testable.
+import { sanitizeInfo } from "./params";
+import type { Guard } from "./protect";
+import type { EditMail } from "./mail";
+export interface Deps { guard?: Guard; mail?: (m: EditMail) => Promise<boolean> }
 import { embedHost, embedTags, newBusinessId } from "./onboard";
 import type { EmbedParams } from "./params";
 
@@ -23,6 +27,8 @@ export interface Repo {
   insert(id: string, b: BusinessInput, tokenHash: string): Promise<boolean>; // false on id collision
   update(id: string, b: BusinessInput): Promise<void>;
   setStatus(id: string, status: string): Promise<void>;
+  listByEmail?(email: string): Promise<BusinessRow[]>;
+  setTokenHash?(id: string, hash: string): Promise<void>;
 }
 
 type V<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -79,7 +85,7 @@ export function publicView(r: BusinessRow): PublicBusiness {
     status: r.status, updatedAt: r.updated_at };
 }
 export function toEmbedParams(p: PublicBusiness): EmbedParams {
-  return { lat: p.lat, lng: p.lng, name: p.name, street: p.street, lgu: p.lgu, autoplay: p.options.autoplay, landmarks: p.options.landmarks };
+  return { lat: p.lat, lng: p.lng, name: p.name, street: p.street, lgu: p.lgu, autoplay: p.options.autoplay, landmarks: p.options.landmarks, info: sanitizeInfo(p.display) };
 }
 
 // ---- tokens ----
@@ -140,15 +146,25 @@ async function readJson(req: Request): Promise<unknown> {
 }
 export const ID_RE = /^bf_[A-Za-z0-9]{8,10}$/;
 
-export async function handleCreate(req: Request, repo: Repo, host: string | undefined, ip: string, gen = newBusinessId): Promise<Response> {
-  if (rateLimited(ip)) return json({ error: "too many requests, try again later" }, 429, { "retry-after": "600" });
+const RATE = () => json({ error: "too many requests, try again later" }, 429, { "retry-after": "600" });
+async function guarded(deps: Deps, body: unknown, ip: string, action: "create" | "resend"): Promise<Response | null> {
+  if (!deps.guard) return null;
+  const e = await deps.guard((body && typeof body === "object" ? body : {}) as Record<string, unknown>, ip, action);
+  if (!e) return null;
+  if (e === "rate") return RATE();
+  return json({ error: e }, e === "spam check not configured" ? 503 : 403);
+}
+export async function handleCreate(req: Request, repo: Repo, host: string | undefined, ip: string, gen = newBusinessId, deps: Deps = {}): Promise<Response> {
+  if (rateLimited(ip)) return RATE();
   let body: unknown; try { body = await readJson(req); } catch { return json({ error: "invalid JSON" }, 400); }
   const v = validateBusiness(body); if (!v.ok) return json({ error: v.error }, 400);
+  const g = await guarded(deps, body, ip, "create"); if (g) return g;
   const token = newEditToken(), h = await hashToken(token);
   for (let i = 0; i < 5; i++) {
     const id = gen();
     if (await repo.insert(id, v.value, h)) {
-      return json({ id, editToken: token, embed: embedTags(embedHost(host), id) }, 201);
+      const emailSent = deps.mail ? await deps.mail({ to: v.value.email, businessName: v.value.name, id, token }).catch(() => false) : false;
+      return json({ id, editToken: token, embed: embedTags(embedHost(host), id), emailSent }, 201);
     }
   }
   return json({ error: "could not allocate an ID, try again" }, 503);
@@ -170,6 +186,8 @@ async function authed(req: Request, id: string, repo: Repo): Promise<BusinessRow
 export async function handleUpdate(req: Request, id: string, repo: Repo): Promise<Response> {
   const row = await authed(req, id, repo); if (row instanceof Response) return row;
   let body: unknown; try { body = await readJson(req); } catch { return json({ error: "invalid JSON" }, 400); }
+  // Email is optional on update: the edit view does not know it, so keep the stored one.
+  if (body && typeof body === "object" && !(body as Record<string, unknown>).email) (body as Record<string, unknown>).email = row.owner_email;
   const v = validateBusiness(body); if (!v.ok) return json({ error: v.error }, 400);
   await repo.update(id, v.value); await purge(id);
   const fresh = await repo.get(id);
@@ -179,6 +197,25 @@ export async function handleDisable(req: Request, id: string, repo: Repo): Promi
   const row = await authed(req, id, repo); if (row instanceof Response) return row;
   await repo.setStatus(id, "disabled"); await purge(id);
   return json({ id, status: "disabled" });
+}
+
+/** POST /api/business/resend {email}: email a fresh edit link for each active business on that address.
+ *  The token is only stored hashed, so this rotates it (old links and keys stop working). Always 202, so it cannot probe emails. */
+export async function handleResend(req: Request, repo: Repo, ip: string, deps: Deps = {}): Promise<Response> {
+  if (rateLimited("resend:" + ip, Date.now(), 5)) return RATE();
+  let body: unknown; try { body = await readJson(req); } catch { return json({ error: "invalid JSON" }, 400); }
+  const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  const email = typeof b.email === "string" ? b.email.trim().toLowerCase() : "";
+  if (!/^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[^\s@<>()",;:]{2,}$/.test(email) || email.length > 254) return json({ error: "enter a valid email" }, 400);
+  const g = await guarded(deps, body, ip, "resend"); if (g) return g;
+  if (deps.mail && repo.listByEmail && repo.setTokenHash) {
+    for (const row of (await repo.listByEmail(email)).filter((r) => r.status !== "disabled").slice(0, 5)) {
+      const token = newEditToken();
+      await repo.setTokenHash(row.id, await hashToken(token));
+      await deps.mail({ to: email, businessName: row.business_name, id: row.id, token }).catch(() => false);
+    }
+  }
+  return json({ ok: true, message: "If that email has a Business Finder map, we have sent its edit link." }, 202);
 }
 
 /** D1-backed repo. */
@@ -200,6 +237,8 @@ export function d1Repo(db: D1Database): Repo {
         .bind(b.name, b.address, b.osmRef ?? null, b.lat, b.lng, b.street ?? null, b.lgu ?? null, b.state ?? null,
           JSON.stringify(b.display), JSON.stringify(b.options), b.email, now(), id).run();
     },
+    async listByEmail(email) { return (await db.prepare("SELECT * FROM business_config WHERE owner_email = ? ORDER BY created_at DESC LIMIT 5").bind(email).all<BusinessRow>()).results ?? []; },
+    async setTokenHash(id, h) { await db.prepare("UPDATE business_config SET edit_token_hash=?, updated_at=? WHERE id=?").bind(h, now(), id).run(); },
     async setStatus(id, s) { await db.prepare("UPDATE business_config SET status=?, updated_at=? WHERE id=?").bind(s, now(), id).run(); },
   };
 }
