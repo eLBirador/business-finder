@@ -12,7 +12,7 @@
 <div class="business-finder" data-lat="-33.7290" data-lng="151.0790" data-name="Your Business"></div>
 <h2>3. Invalid coordinates</h2>
 <iframe src="/embed?lat=abc&lng=151" width="100%" height="200" style="border:0" title="Invalid example"></iframe>
-<h2 id="onboarding">4. Self-serve onboarding (TEMPORARY preview)</h2>
+<h2 id="onboarding">4. Self-serve onboarding (dev)</h2>
 <style>
 #ob{max-width:640px;font-size:14px;color:#111827}
 #ob svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -69,7 +69,7 @@
 .ob-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 <div id="ob">
-<div class="ob-banner" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Temporary onboarding preview: not saved, for demo only (no D1 yet; the ID will not resolve).</div>
+<div class="ob-banner" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Dev onboarding: saves to D1 (local D1 on dev26). The ID resolves at /e/&lt;id&gt;.</div>
 <form id="ob-form" class="ob-search" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
 <input id="ob-addr" name="address" maxlength="200" required placeholder="Business address, e.g. Westfield Hornsby" aria-label="Business address" aria-controls="ob-results" autocomplete="off">
 <button type="submit" class="ob-go" aria-label="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button></form>
@@ -82,7 +82,8 @@
 <div id="ob-map" style="height:320px;border-radius:8px" tabindex="0" aria-label="Pin map. Arrow keys nudge the pin 1 m, Shift for 10 m."></div></div>
 <div class="ob-row"><label>Pin <input id="ob-ll" readonly size="24" aria-label="Pin latitude, longitude"></label>
 <button type="button" class="ob-link" id="ob-reset" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/></svg>Reset to search result</button></div>
-<div class="ob-row"><label>Business name (optional, preview only) <input id="ob-name" maxlength="80"></label></div>
+<div class="ob-row"><label>Business name <input id="ob-name" maxlength="80" required></label> <label>Owner email <input id="ob-email" type="email" maxlength="254" autocomplete="email" required></label></div>
+<p class="ob-sr" id="ob-err" role="alert" style="position:static;width:auto;height:auto;clip:auto;color:#b91c1c"></p>
 <button type="button" class="ob-primary" id="ob-confirm" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Use this location</button>
 </div>
 <div class="ob-summary" id="ob-summary" hidden><span id="ob-sum"></span><button type="button" class="ob-link" id="ob-edit">Edit</button></div>
@@ -90,8 +91,9 @@
 <div class="ob-tabs" role="tablist"><button role="tab" id="ob-t1" aria-selected="true" aria-controls="ob-p1">Iframe</button><button role="tab" id="ob-t2" aria-selected="false" aria-controls="ob-p2">Script tag</button></div>
 <div class="ob-code" id="ob-p1" role="tabpanel"><pre id="ob-iframe"></pre><button type="button" class="ob-copy" data-for="ob-iframe"></button></div>
 <div class="ob-code" id="ob-p2" role="tabpanel" hidden><pre id="ob-script"></pre><button type="button" class="ob-copy" data-for="ob-script"></button></div>
+<div class="ob-banner" role="note" id="ob-tokbox"><strong>Edit token (shown once):</strong> <code id="ob-token"></code><br>Save this to edit later. Email magic links aren&#39;t built yet, so this token is the only way to edit (<code>PUT /api/business/&lt;id&gt;</code> with <code>Authorization: Bearer &lt;token&gt;</code>).</div>
 <span class="ob-sr" id="ob-live" aria-live="polite"></span>
-<button type="button" class="ob-secondary" id="ob-play"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>Play preview</button> <small>(dev raw-params path with the confirmed lat/lng)</small>
+<button type="button" class="ob-secondary" id="ob-play"><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>Play preview</button> <small>(plays the saved embed at /e/&lt;id&gt;)</small>
 <iframe id="ob-player" hidden width="600" height="400" style="border:0;max-width:100%;display:block;margin-top:8px" title="Preview"></iframe></div>
 </div>
 <script src="/vendor/maplibre-gl.js"></script><script src="/onboard.js"></script>

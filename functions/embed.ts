@@ -1,5 +1,5 @@
 // Iframe page (PRD 5.1). Thin player: fetches /api/plan and plays it. All logic lives in /api/plan.
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+export const EMBED_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Business location map</title>
 <link rel="stylesheet" href="/vendor/maplibre-gl.css"><link rel="stylesheet" href="/player.css">
 </head><body><div id="map"></div><div id="labels" aria-live="polite"><div class="card" hidden><div class="crumbs"></div><div class="nm"></div><div class="st"></div></div></div>
@@ -12,4 +12,4 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <button id="skip" class="bf-skip" type="button" aria-label="Skip intro animation" hidden>Skip <svg class="bf-ic" aria-hidden="true" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg></button>
 <script src="/vendor/maplibre-gl.js"></script><script src="/player.js"></script></body></html>`;
 export const onRequestGet: PagesFunction = () =>
-  new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });
+  new Response(EMBED_HTML, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" } });

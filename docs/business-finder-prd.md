@@ -261,6 +261,29 @@ Notes:
 - Landmarks aren't stored per business yet. They're computed and cached by the Worker. A `landmark_overrides` JSON column or table can come later.
 - Schema changes go through D1 migrations (`wrangler d1 migrations`), kept in the repo.
 
+### 8.3 Implementation (feat/d1-storage)
+
+- **Database:** D1 `business-finder` (region OC), `database_id 36ec6ae1-c3a5-4cdf-a6c9-7dd84231917f`, bound as `DB` in `wrangler.toml`.
+- **Migration:** `migrations/0001_business_config.sql` holds the 8.2 schema plus CHECKs (id format, name length, lat/lng ranges, `json_valid` on JSON columns, status enum) and indexes on `status` and `email`.
+  - Apply with `npx wrangler d1 migrations apply business-finder --remote`, or with `--local` for dev.
+- **Code:** the logic is in `src/store.ts` (validation, IDs, tokens, rate limit, cache, repo). The routes are in `functions/api/business/`, `functions/e/[id].ts` and `functions/api/plan.ts?id=`.
+
+| Method & path | Auth | Result |
+|---|---|---|
+| `POST /api/business` | none (rate-limited 10 per 10 min per IP) | 201 `{id, editToken, embed:{iframe, script}}`; 400 for invalid input, 429 when rate-limited |
+| `GET /api/business/:id` | public | 200 public fields (never the email or token hash); 404 for unknown or disabled IDs |
+| `PUT /api/business/:id` | `Authorization: Bearer <editToken>` | full replace (same body as POST): 200 updated, `updated_at` bumped, edge cache purged; 401 without a valid token |
+| `DELETE /api/business/:id` | Bearer | sets status to `disabled`, after which the embed returns 404 |
+| `GET /e/:id`, embed.js `data-id` | public | player loads the config from D1; 404 page for unknown or disabled IDs |
+
+- **IDs:** `bf_` plus 8 base62 characters, generated on the server with crypto RNG. `INSERT OR IGNORE` retries up to 5 times on a collision, then returns 503.
+- **Edit token:** `bfe_` plus 32 random bytes in base64url. It is returned once, and only its SHA-256 hash is stored. Comparison is constant-time.
+- **Caching:** public configs are cached in `caches.default` for 60 s and purged on PUT and DELETE. The raw-params `/embed` path is unchanged.
+- **Out of scope for now:** email magic links and email verification. New configs are `active` right away.
+- **Caveats:**
+  - The in-memory rate limit and cache purge are per isolate and per colo.
+  - Phone, website, hours and tagline are stored but not yet rendered by the player.
+
 ## 9. Functional requirements (v1)
 
 - Load a map for an LGU and show its businesses as pins.

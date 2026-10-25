@@ -72,19 +72,29 @@
     };
   });
   $("ob-confirm").onclick = function () {
-    var a = new Uint8Array(8), id = "bf_"; crypto.getRandomValues(a);
-    for (var i = 0; i < 8; i++) id += B62[a[i] % 62];
-    var host = window.__bfHost || "https://goto.yahaay.com";
-    $("ob-iframe").textContent = '<iframe src="' + host + '/e/' + id + '"\n        width="100%" height="400" style="border:0" loading="lazy"\n        title="Business location map" allowfullscreen></iframe>';
-    $("ob-script").textContent = '<script src="' + host + '/embed.js" async></' + 'script>\n<div class="business-finder" data-id="' + id + '"></div>';
-    $("ob-id").textContent = id; $("ob-out").hidden = false; $("ob-player").hidden = true; tab(1);
-    $("ob-step2").hidden = true; $("ob-summary").hidden = false;
-    $("ob-sum").textContent = "Pin: " + $("ob-ll").value + (picked ? " · " + picked.display_name.split(", ")[0] : "");
+    var p = marker.getLngLat(), err = $("ob-err"), btn = $("ob-confirm");
+    err.textContent = "";
+    var name = $("ob-name").value.trim() || (picked ? picked.display_name.split(", ")[0] : "");
+    var body = { name: name, address: picked ? picked.display_name.slice(0, 200) : $("ob-addr").value.trim(), osmRef: picked && picked.osm_ref || undefined,
+      lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6), email: $("ob-email").value.trim(), options: { landmarks: true, autoplay: true } };
+    btn.disabled = true;
+    fetch("/api/business", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "Save failed"); return j; }); })
+      .then(function (j) {
+        window.__bfId = j.id;
+        $("ob-iframe").textContent = j.embed.iframe; $("ob-script").textContent = j.embed.script;
+        $("ob-token").textContent = j.editToken;
+        $("ob-id").textContent = j.id; $("ob-out").hidden = false; $("ob-player").hidden = true; tab(1);
+        $("ob-step2").hidden = true; $("ob-summary").hidden = false;
+        $("ob-sum").textContent = "Saved " + j.id + " · pin " + $("ob-ll").value + (picked ? " · " + picked.display_name.split(", ")[0] : "");
+      })
+      .catch(function (e) { err.textContent = e.message; })
+      .finally(function () { btn.disabled = false; });
   };
   $("ob-edit").onclick = function () { $("ob-step2").hidden = false; $("ob-summary").hidden = true; $("ob-out").hidden = true; map.resize(); };
   $("ob-play").onclick = function () {
     var p = marker.getLngLat(), q = new URLSearchParams({ lat: p.lat.toFixed(6), lng: p.lng.toFixed(6) });
     var n = $("ob-name").value.trim(); if (n) q.set("name", n);
-    $("ob-player").src = "/embed?" + q.toString(); $("ob-player").hidden = false;
+    $("ob-player").src = window.__bfId ? "/e/" + window.__bfId : "/embed?" + q.toString(); $("ob-player").hidden = false;
   };
 })();

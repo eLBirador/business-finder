@@ -1,6 +1,8 @@
 // Thin player: no animation rules here. Fetches the Worker's plan and plays its keyframes.
 (function () {
   var q = new URLSearchParams(location.search);
+  var idm = /^\/e\/(bf_[A-Za-z0-9]{8,10})\/?$/.exec(location.pathname);
+  if (idm) q = new URLSearchParams({ id: idm[1], theme: q.get("theme") || "" });
   var status = document.getElementById("status"), labels = document.getElementById("labels");
   var controls = document.getElementById("controls"), dir = document.getElementById("dir");
   var skipBtn = document.getElementById("skip"), replayBtn = document.getElementById("replay");
