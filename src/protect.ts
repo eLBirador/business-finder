@@ -1,6 +1,6 @@
 // Spam protection for public submissions (create, resend): honeypot, time-to-submit, Turnstile siteverify, durable per-IP limit.
 export interface ProtectEnv { TURNSTILE_SECRET_KEY?: string; TURNSTILE_SITE_KEY?: string; TURNSTILE_HOSTNAMES?: string; DB?: D1Database }
-export const DEFAULT_HOSTNAMES = "yahaay.com,www.yahaay.com,goto.yahaay.com,business-finder.pages.dev";
+export const DEFAULT_HOSTNAMES = "yahaay.com,www.yahaay.com,goto.yahaay.com,business-finder-26j.pages.dev";
 export const MIN_SUBMIT_MS = 3000;
 export const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
