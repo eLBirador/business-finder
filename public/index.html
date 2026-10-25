@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Business Finder demo</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem}pre{background:#f4f4f4;padding:1rem;overflow:auto}</style></head>
+<body><h1>Business Finder: demo</h1>
+<p>Draft. Thornleigh example (-33.7290, 151.0790). Pricing is out of scope.</p>
+<h2>1. Iframe embed</h2>
+<pre>&lt;iframe src="/embed?lat=-33.7290&amp;lng=151.0790&amp;name=Your%20Business&amp;street=Pennant%20Hills%20Road" width="100%" height="400" style="border:0" loading="lazy" title="Business location map" allowfullscreen&gt;&lt;/iframe&gt;</pre>
+<iframe src="/embed?lat=-33.7290&lng=151.0790&name=Your%20Business&street=Pennant%20Hills%20Road" width="100%" height="400" style="border:0" loading="lazy" title="Business location map" allowfullscreen></iframe>
+<h2>2. Script-tag embed</h2>
+<pre>&lt;script src="/embed.js" async&gt;&lt;/script&gt;
+&lt;div class="business-finder" data-lat="-33.7290" data-lng="151.0790" data-name="Your Business"&gt;&lt;/div&gt;</pre>
+<script src="/embed.js" async></script>
+<div class="business-finder" data-lat="-33.7290" data-lng="151.0790" data-name="Your Business"></div>
+<h2>3. Invalid coordinates</h2>
+<iframe src="/embed?lat=abc&lng=151" width="100%" height="200" style="border:0" title="Invalid example"></iframe>
+</body></html>

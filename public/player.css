@@ -1,0 +1,11 @@
+html,body,#map{margin:0;height:100%;width:100%;font-family:system-ui,sans-serif}
+#labels{position:absolute;top:12px;left:12px;right:12px;pointer-events:none;display:flex;flex-direction:column;gap:4px}
+.lbl{background:rgba(255,255,255,.92);padding:6px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.2);
+ font-size:20px;font-weight:600;align-self:flex-start;opacity:0;transition:opacity .6s,font-size .6s,padding .6s}
+.lbl.on{opacity:1}.lbl.crumb{font-size:12px;font-weight:500;padding:2px 8px;opacity:.85}
+#status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f3f4f6;color:#555}
+#status[hidden]{display:none}
+#controls{position:absolute;bottom:30px;left:10px;display:flex;gap:6px}
+#controls button,#controls a{background:#fff;border:1px solid #ccc;border-radius:6px;padding:4px 10px;font-size:13px;color:#222;text-decoration:none;cursor:pointer}
+#controls button[aria-pressed=true]{background:#1d4ed8;color:#fff}
+.lm{background:#fff;border:2px solid #1d4ed8;border-radius:12px;padding:1px 6px;font-size:12px;cursor:pointer;white-space:nowrap}

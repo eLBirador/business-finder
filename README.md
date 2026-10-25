@@ -70,3 +70,37 @@ Local businesses and organisations in Thornleigh, Hornsby Shire and nearby north
 - [ ] Branding and final product name
 - [ ] Final embed code format (script tag, iframe, or both)
 - [ ] A demo page to show local businesses
+
+## First draft (code)
+
+The spec is the PRD: [docs/business-finder-prd.md](docs/business-finder-prd.md). This draft is a Cloudflare Pages project with Pages Functions (the Worker). The browser only talks to the Worker and never sees upstream tile URLs.
+
+| Route | What it does |
+|---|---|
+| `/` | Demo page: both embed forms (Thornleigh example) |
+| `/embed?lat&lng&name&street&lgu&autoplay&landmarks` | Iframe page: a thin MapLibre player |
+| `/embed.js` | Script-tag loader: turns `.business-finder` divs (data-* attributes) into the iframe |
+| `/api/plan?lat&lng&...` | Server-side phase 1 animation plan (camera keyframes, timings, labels) plus ranked nearby landmarks |
+| `/style.json`, `/tiles/*` | Style and tile proxy for the active tile source, edge-cached |
+
+### Run locally
+
+```sh
+npm install
+npm run dev        # vendors MapLibre into public/vendor, then wrangler pages dev on :8788
+npm test           # vitest
+npm run typecheck
+```
+
+### Settings (`wrangler.toml` [vars])
+
+- `TILE_SOURCE`: `osm` (default, interim OpenFreeMap vector style via `OSM_STYLE_URL`, no key) or `webmaps` (target, `WEBMAPS_STYLE_URL`, placeholder until api.webmaps.app tiles are fixed). Only the style and proxy target change.
+- `LANDMARKS_SOURCE`: `sample` (default, bundled Thornleigh sample) or `overpass` (cached OSM Overpass lookup).
+- `REVERSE_GEOCODE`: `off` (default) or `nominatim` (cached street-name lookup).
+
+### Known gaps in the draft
+
+- State labels use coarse bounding boxes; the LGU lookup is a stub (Hornsby Shire only). Use `lgu`/`street` params to override.
+- Street name comes from the `street` param unless Nominatim is switched on.
+- Landmark sample coordinates are approximate.
+- Not deployed. No pricing, billing or customer keys (deferred per the PRD).
