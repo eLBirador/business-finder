@@ -16,3 +16,10 @@ LANDMARKS_SOURCE = "sample"
 USER_AGENT = "BusinessFinder/0.1 (+https://github.com/eLBirador/business-finder)"
 # Public embed/worker host used in generated tags (PRD 5.1). DNS/custom domain not set up yet (no deploy).
 EMBED_HOST = "https://goto.yahaay.com"
+
+# Business configs (PRD 8). Created 25 Oct 2026; schema in migrations/.
+[[d1_databases]]
+binding = "DB"
+database_name = "business-finder"
+database_id = "36ec6ae1-c3a5-4cdf-a6c9-7dd84231917f"
+migrations_dir = "migrations"

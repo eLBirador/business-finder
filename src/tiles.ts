@@ -1,4 +1,4 @@
-export interface Env { TILE_SOURCE?: string; OSM_STYLE_URL?: string; WEBMAPS_STYLE_URL?: string; REVERSE_GEOCODE?: string; LANDMARKS_SOURCE?: string; USER_AGENT?: string; EMBED_HOST?: string; CORS_ORIGINS?: string }
+export interface Env { TILE_SOURCE?: string; OSM_STYLE_URL?: string; WEBMAPS_STYLE_URL?: string; REVERSE_GEOCODE?: string; LANDMARKS_SOURCE?: string; USER_AGENT?: string; EMBED_HOST?: string; DB?: D1Database; CORS_ORIGINS?: string }
 
 /** The one switch: osm (default) or webmaps. */
 export function styleUrl(env: Env): string {

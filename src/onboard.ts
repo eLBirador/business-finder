@@ -65,7 +65,7 @@ export const DEFAULT_CORS_ORIGINS = ["https://yahaay.com", "https://www.yahaay.c
 export function corsHeaders(origin: string | null, list?: string): Record<string, string> | null {
   const allowed = list ? list.split(",").map((s) => s.trim()).filter(Boolean) : DEFAULT_CORS_ORIGINS;
   if (!origin || !allowed.includes(origin)) return null;
-  return { "access-control-allow-origin": origin, "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-max-age": "86400", vary: "Origin" };
+  return { "access-control-allow-origin": origin, "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS", "access-control-allow-headers": "content-type, authorization", "access-control-max-age": "86400", vary: "Origin" };
 }
 /** frame-ancestors for /embed: any site may embed (that is the product), yahaay.com explicitly included. */
 export const EMBED_CSP = "frame-ancestors *";
